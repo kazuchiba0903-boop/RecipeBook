@@ -1,13 +1,13 @@
-const CACHE_NAME = 'recipe-book-v1';
+const CACHE_NAME = 'recipe-book-v2';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
-  './icons/icon.svg',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/recipe-favicon-64-v2.png',
+  './icons/recipe-icon-192-v2.png',
+  './icons/recipe-icon-512-v2.png'
 ];
 
 self.addEventListener('install', event => {
@@ -25,10 +25,10 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    fetch(event.request).then(response => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
       return response;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
   );
 });
