@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff7ed" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="レシピ帳" />
+  <title>レシピ帳</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MY RECIPE BOOK</p>
+        <h1>🍳 レシピ帳</h1>
+      </div>
+      <button id="addTopBtn" class="icon-btn" aria-label="レシピを追加">＋</button>
+    </header>
+
+    <main>
+      <section class="search-panel">
+        <label class="search-box">
+          <span>🔎</span>
+          <input id="searchInput" type="search" placeholder="料理名・タグで検索" autocomplete="off" />
+        </label>
+
+        <div class="controls-row">
+          <button id="favoriteFilterBtn" class="filter-btn">☆ お気に入り</button>
+          <select id="sortSelect" class="sort-select" aria-label="並べ替え">
+            <option value="newest">新しい順</option>
+            <option value="name">名前順</option>
+            <option value="favorite">お気に入り順</option>
+          </select>
+        </div>
+
+        <div id="tagChips" class="tag-chips" aria-label="タグ絞り込み"></div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-heading">
+          <h2>レシピ</h2>
+          <span id="recipeCount" class="count-badge">0件</span>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+          <div class="empty-icon">📸</div>
+          <h3>まだレシピがありません</h3>
+          <p>スクショを登録すると、いつでもすぐ見返せます。</p>
+          <button id="emptyAddBtn" class="primary-btn">＋ 最初のレシピを追加</button>
+        </div>
+
+        <div id="recipeGrid" class="recipe-grid" hidden></div>
+      </section>
+    </main>
+
+    <button id="fab" class="fab" aria-label="レシピを追加">＋</button>
+  </div>
+
+  <dialog id="recipeDialog" class="sheet-dialog">
+    <form id="recipeForm" method="dialog" class="sheet-card">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <p class="eyebrow">RECIPE</p>
+          <h2 id="formTitle">レシピを追加</h2>
+        </div>
+        <button type="button" class="close-btn" data-close-dialog="recipeDialog" aria-label="閉じる">×</button>
+      </div>
+
+      <input id="recipeId" type="hidden" />
+
+      <label class="field-label" for="titleInput">料理名</label>
+      <input id="titleInput" class="text-input" type="text" placeholder="例：鶏むね肉の照り焼き" maxlength="80" required />
+
+      <label class="field-label" for="tagInput">タグ</label>
+      <input id="tagInput" class="text-input" type="text" placeholder="例：主菜, 鶏肉, 簡単" />
+      <p class="field-help">「,」または「、」で区切って入力</p>
+
+      <div class="field-label-row">
+        <span class="field-label">スクショ</span>
+        <span id="imageCountText" class="field-meta">0枚</span>
+      </div>
+
+      <label class="upload-box" for="imageInput">
+        <span class="upload-icon">＋</span>
+        <span>画像を追加</span>
+        <small>複数選択できます</small>
+      </label>
+      <input id="imageInput" type="file" accept="image/*" multiple hidden />
+      <div id="imagePreview" class="image-preview"></div>
+
+      <label class="favorite-toggle">
+        <input id="favoriteInput" type="checkbox" />
+        <span>★ お気に入りに登録</span>
+      </label>
+
+      <div class="form-actions">
+        <button type="button" class="secondary-btn" data-close-dialog="recipeDialog">キャンセル</button>
+        <button type="submit" class="primary-btn">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="detailDialog" class="detail-dialog">
+    <article class="detail-card">
+      <div class="detail-header sticky-header">
+        <button id="detailCloseBtn" class="round-btn" aria-label="閉じる">←</button>
+        <div class="detail-actions">
+          <button id="detailFavoriteBtn" class="round-btn star-btn" aria-label="お気に入り">☆</button>
+          <button id="detailEditBtn" class="round-btn" aria-label="編集">✎</button>
+          <button id="detailDeleteBtn" class="round-btn danger" aria-label="削除">🗑</button>
+        </div>
+      </div>
+      <div class="detail-body">
+        <h2 id="detailTitle"></h2>
+        <div id="detailTags" class="detail-tags"></div>
+        <div id="detailImages" class="detail-images"></div>
+      </div>
+    </article>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
