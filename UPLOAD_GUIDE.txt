@@ -1,0 +1,28 @@
+GitHub Pages 用アップロード手順
+
+リポジトリ直下が次の構成になるようにしてください。
+
+index.html
+app.js
+style.css
+manifest.json
+sw.js
+README.txt
+UPLOAD_GUIDE.txt
+icons/
+  recipe-favicon-64-v2.png
+  recipe-icon-192-v2.png
+  recipe-icon-512-v2.png
+
+重要：GitHubのリポジトリ画面で icons というフォルダが1つ見える状態が正解です。
+PNGファイルがリポジトリ直下に並んでいる場合は誤りです。
+
+最も確実な方法：
+1. ルートに index.html, app.js, style.css, manifest.json, sw.js をアップロード
+2. GitHub上で Add file → Create new file
+3. ファイル名欄に icons/.gitkeep と入力して Commit（iconsフォルダが作成される）
+4. iconsフォルダを開く
+5. Add file → Upload files から3つのPNGをアップロード
+6. .gitkeep は残しても動作に問題ありません
+
+更新後は、スマホの既存のホーム画面アイコンを削除してから、GitHub Pagesを再読み込みし、再度ホーム画面に追加してください。

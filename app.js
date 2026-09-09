@@ -275,26 +275,30 @@ function renderRecipes() {
 
   list.forEach(recipe => {
     const card = document.createElement('article');
-    card.className = 'recipe-card';
+    card.className = 'recipe-card compact';
 
-    const thumb = document.createElement('div');
-    thumb.className = 'thumb-wrap';
-    if (recipe.images?.[0]) {
-      const img = document.createElement('img');
-      const url = URL.createObjectURL(recipe.images[0]);
-      img.src = url;
-      img.onload = () => URL.revokeObjectURL(url);
-      img.alt = recipe.title;
-      thumb.appendChild(img);
-    } else {
-      const noImg = document.createElement('div');
-      noImg.className = 'no-image';
-      noImg.textContent = '🍽️';
-      thumb.appendChild(noImg);
-    }
+    const body = document.createElement('div');
+    body.className = 'card-body compact-body';
+
+    const topRow = document.createElement('div');
+    topRow.className = 'card-top-row';
+
+    const titleWrap = document.createElement('div');
+    titleWrap.className = 'title-wrap';
+
+    const title = document.createElement('h3');
+    title.className = 'card-title compact-title';
+    title.textContent = recipe.title;
+    titleWrap.appendChild(title);
+
+    const meta = document.createElement('div');
+    meta.className = 'card-meta';
+    const imageCount = recipe.images?.length || 0;
+    meta.textContent = `スクショ ${imageCount}枚`;
+    titleWrap.appendChild(meta);
 
     const star = document.createElement('button');
-    star.className = 'card-star';
+    star.className = 'card-star compact-star';
     star.textContent = recipe.favorite ? '★' : '☆';
     star.setAttribute('aria-label', recipe.favorite ? 'お気に入り解除' : 'お気に入り登録');
     star.addEventListener('click', async e => {
@@ -304,19 +308,14 @@ function renderRecipes() {
       await putRecipe(recipe);
       await refreshRecipes();
     });
-    thumb.appendChild(star);
 
-    const body = document.createElement('div');
-    body.className = 'card-body';
-    const title = document.createElement('h3');
-    title.className = 'card-title';
-    title.textContent = recipe.title;
-    body.appendChild(title);
+    topRow.append(titleWrap, star);
+    body.appendChild(topRow);
 
     if (recipe.tags?.length) {
       const tags = document.createElement('div');
-      tags.className = 'card-tags';
-      recipe.tags.slice(0, 3).forEach(tag => {
+      tags.className = 'card-tags compact-tags';
+      recipe.tags.slice(0, 4).forEach(tag => {
         const span = document.createElement('span');
         span.className = 'mini-tag';
         span.textContent = `#${tag}`;
@@ -325,7 +324,7 @@ function renderRecipes() {
       body.appendChild(tags);
     }
 
-    card.append(thumb, body);
+    card.append(body);
     card.addEventListener('click', () => openDetail(recipe.id));
     els.recipeGrid.appendChild(card);
   });
