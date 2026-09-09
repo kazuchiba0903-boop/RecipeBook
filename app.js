@@ -20,8 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     favoriteFilterBtn: document.getElementById('favoriteFilterBtn'),
     sortSelect: document.getElementById('sortSelect'),
     tagChips: document.getElementById('tagChips'),
-    addTopBtn: document.getElementById('addTopBtn'),
-    emptyAddBtn: document.getElementById('emptyAddBtn'),
     fab: document.getElementById('fab'),
     recipeDialog: document.getElementById('recipeDialog'),
     recipeForm: document.getElementById('recipeForm'),
@@ -95,7 +93,7 @@ async function refreshRecipes() {
 }
 
 function bindEvents() {
-  [els.addTopBtn, els.emptyAddBtn, els.fab].forEach(btn => btn?.addEventListener('click', () => openRecipeForm()));
+  els.fab?.addEventListener('click', () => openRecipeForm());
   document.querySelectorAll('[data-close-dialog]').forEach(btn => {
     btn.addEventListener('click', () => document.getElementById(btn.dataset.closeDialog)?.close());
   });
