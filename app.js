@@ -4,7 +4,6 @@ const STORE = 'recipes';
 
 let db;
 let recipes = [];
-let selectedTag = '';
 let favoriteOnly = false;
 let detailRecipeId = null;
 let pendingImages = [];
@@ -19,14 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchInput: document.getElementById('searchInput'),
     favoriteFilterBtn: document.getElementById('favoriteFilterBtn'),
     sortSelect: document.getElementById('sortSelect'),
-    tagChips: document.getElementById('tagChips'),
     fab: document.getElementById('fab'),
     recipeDialog: document.getElementById('recipeDialog'),
     recipeForm: document.getElementById('recipeForm'),
     recipeId: document.getElementById('recipeId'),
     formTitle: document.getElementById('formTitle'),
     titleInput: document.getElementById('titleInput'),
-    tagInput: document.getElementById('tagInput'),
     favoriteInput: document.getElementById('favoriteInput'),
     imageInput: document.getElementById('imageInput'),
     imagePreview: document.getElementById('imagePreview'),
@@ -37,8 +34,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailEditBtn: document.getElementById('detailEditBtn'),
     detailDeleteBtn: document.getElementById('detailDeleteBtn'),
     detailTitle: document.getElementById('detailTitle'),
-    detailTags: document.getElementById('detailTags'),
     detailImages: document.getElementById('detailImages'),
+    backupBtn: document.getElementById('backupBtn'),
+    backupDialog: document.getElementById('backupDialog'),
+    exportBackupBtn: document.getElementById('exportBackupBtn'),
+    importBackupBtn: document.getElementById('importBackupBtn'),
+    backupFileInput: document.getElementById('backupFileInput'),
     toast: document.getElementById('toast')
   });
 
@@ -88,7 +89,6 @@ async function deleteRecipeById(id) {
 
 async function refreshRecipes() {
   recipes = await getAllRecipes();
-  renderTagChips();
   renderRecipes();
 }
 
@@ -111,6 +111,10 @@ function bindEvents() {
   els.detailFavoriteBtn.addEventListener('click', toggleDetailFavorite);
   els.detailEditBtn.addEventListener('click', editCurrentRecipe);
   els.detailDeleteBtn.addEventListener('click', deleteCurrentRecipe);
+  els.backupBtn.addEventListener('click', () => els.backupDialog.showModal());
+  els.exportBackupBtn.addEventListener('click', exportBackup);
+  els.importBackupBtn.addEventListener('click', () => els.backupFileInput.click());
+  els.backupFileInput.addEventListener('change', importBackup);
 }
 
 function openRecipeForm(recipe = null) {
@@ -119,7 +123,6 @@ function openRecipeForm(recipe = null) {
   els.recipeId.value = recipe?.id || '';
   els.formTitle.textContent = recipe ? 'レシピを編集' : 'レシピを追加';
   els.titleInput.value = recipe?.title || '';
-  els.tagInput.value = recipe?.tags?.join(', ') || '';
   els.favoriteInput.checked = !!recipe?.favorite;
   pendingImages = (recipe?.images || []).map((blob, idx) => ({ key: `${recipe.id}-${idx}`, blob }));
   renderImagePreview();
@@ -180,10 +183,6 @@ function renderImagePreview() {
   });
 }
 
-function parseTags(text) {
-  return [...new Set(text.split(/[,、\n]/).map(t => t.trim()).filter(Boolean))].slice(0, 12);
-}
-
 async function saveRecipeFromForm(e) {
   e.preventDefault();
   const title = els.titleInput.value.trim();
@@ -195,7 +194,6 @@ async function saveRecipeFromForm(e) {
   const recipe = {
     id,
     title,
-    tags: parseTags(els.tagInput.value),
     favorite: els.favoriteInput.checked,
     images: pendingImages.map(i => i.blob),
     createdAt: existing?.createdAt || now,
@@ -216,10 +214,9 @@ async function saveRecipeFromForm(e) {
 function getFilteredRecipes() {
   const q = els.searchInput.value.trim().toLowerCase();
   let list = recipes.filter(recipe => {
-    const matchesText = !q || recipe.title.toLowerCase().includes(q) || (recipe.tags || []).some(tag => tag.toLowerCase().includes(q));
+    const matchesText = !q || recipe.title.toLowerCase().includes(q);
     const matchesFavorite = !favoriteOnly || recipe.favorite;
-    const matchesTag = !selectedTag || (recipe.tags || []).includes(selectedTag);
-    return matchesText && matchesFavorite && matchesTag;
+    return matchesText && matchesFavorite;
   });
 
   const sort = els.sortSelect.value;
@@ -229,31 +226,6 @@ function getFilteredRecipes() {
     return b.createdAt - a.createdAt;
   });
   return list;
-}
-
-function renderTagChips() {
-  const counts = new Map();
-  recipes.forEach(r => (r.tags || []).forEach(tag => counts.set(tag, (counts.get(tag) || 0) + 1)));
-  const tags = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b, 'ja'));
-  if (selectedTag && !counts.has(selectedTag)) selectedTag = '';
-  els.tagChips.innerHTML = '';
-  if (!tags.length) return;
-
-  const all = makeTagChip('すべて', '', !selectedTag);
-  els.tagChips.appendChild(all);
-  tags.forEach(tag => els.tagChips.appendChild(makeTagChip(tag, tag, selectedTag === tag)));
-}
-
-function makeTagChip(label, value, active) {
-  const btn = document.createElement('button');
-  btn.className = `tag-chip${active ? ' active' : ''}`;
-  btn.textContent = label;
-  btn.addEventListener('click', () => {
-    selectedTag = value;
-    renderTagChips();
-    renderRecipes();
-  });
-  return btn;
 }
 
 function renderRecipes() {
@@ -268,7 +240,7 @@ function renderRecipes() {
     const msg = document.createElement('div');
     msg.className = 'empty-state';
     msg.style.gridColumn = '1 / -1';
-    msg.innerHTML = '<div class="empty-icon">🔎</div><h3>該当するレシピがありません</h3><p>検索条件やタグを変えてみてください。</p>';
+    msg.innerHTML = '<div class="empty-icon">🔎</div><h3>該当するレシピがありません</h3><p>検索条件を変えてみてください。</p>';
     els.recipeGrid.appendChild(msg);
     return;
   }
@@ -280,22 +252,9 @@ function renderRecipes() {
     const body = document.createElement('div');
     body.className = 'card-body compact-body';
 
-    const topRow = document.createElement('div');
-    topRow.className = 'card-top-row';
-
-    const titleWrap = document.createElement('div');
-    titleWrap.className = 'title-wrap';
-
     const title = document.createElement('h3');
     title.className = 'card-title compact-title';
     title.textContent = recipe.title;
-    titleWrap.appendChild(title);
-
-    const meta = document.createElement('div');
-    meta.className = 'card-meta';
-    const imageCount = recipe.images?.length || 0;
-    meta.textContent = `スクショ ${imageCount}枚`;
-    titleWrap.appendChild(meta);
 
     const star = document.createElement('button');
     star.className = 'card-star compact-star';
@@ -309,21 +268,7 @@ function renderRecipes() {
       await refreshRecipes();
     });
 
-    topRow.append(titleWrap, star);
-    body.appendChild(topRow);
-
-    if (recipe.tags?.length) {
-      const tags = document.createElement('div');
-      tags.className = 'card-tags compact-tags';
-      recipe.tags.slice(0, 4).forEach(tag => {
-        const span = document.createElement('span');
-        span.className = 'mini-tag';
-        span.textContent = `#${tag}`;
-        tags.appendChild(span);
-      });
-      body.appendChild(tags);
-    }
-
+    body.append(title, star);
     card.append(body);
     card.addEventListener('click', () => openDetail(recipe.id));
     els.recipeGrid.appendChild(card);
@@ -337,14 +282,6 @@ function openDetail(id) {
   els.detailTitle.textContent = recipe.title;
   els.detailFavoriteBtn.textContent = recipe.favorite ? '★' : '☆';
   els.detailFavoriteBtn.classList.toggle('active', recipe.favorite);
-  els.detailTags.innerHTML = '';
-  (recipe.tags || []).forEach(tag => {
-    const chip = document.createElement('span');
-    chip.className = 'detail-tag';
-    chip.textContent = `#${tag}`;
-    els.detailTags.appendChild(chip);
-  });
-
   els.detailImages.innerHTML = '';
   if (!recipe.images?.length) {
     const div = document.createElement('div');
@@ -391,6 +328,92 @@ async function deleteCurrentRecipe() {
   detailRecipeId = null;
   await refreshRecipes();
   showToast('レシピを削除しました');
+}
+
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function exportBackup() {
+  try {
+    const exportedRecipes = [];
+    for (const recipe of recipes) {
+      const images = [];
+      for (const blob of recipe.images || []) images.push(await blobToDataURL(blob));
+      exportedRecipes.push({
+        id: recipe.id,
+        title: recipe.title,
+        favorite: !!recipe.favorite,
+        createdAt: recipe.createdAt,
+        updatedAt: recipe.updatedAt,
+        images
+      });
+    }
+    const payload = {
+      format: 'recipe-book-backup',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      recipes: exportedRecipes
+    };
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10).replaceAll('-', '');
+    a.href = url;
+    a.download = `recipe-book-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('バックアップを書き出しました');
+  } catch (err) {
+    console.error(err);
+    showToast('バックアップの作成に失敗しました');
+  }
+}
+
+async function dataURLToBlob(dataURL) {
+  const response = await fetch(dataURL);
+  return response.blob();
+}
+
+async function importBackup(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const payload = JSON.parse(await file.text());
+    if (payload?.format !== 'recipe-book-backup' || !Array.isArray(payload.recipes)) {
+      throw new Error('Invalid backup format');
+    }
+    if (!confirm(`${payload.recipes.length}件のレシピを復元しますか？\n同じレシピは上書きされ、その他の既存レシピは残ります。`)) return;
+    for (const item of payload.recipes) {
+      if (!item?.id || typeof item.title !== 'string') continue;
+      const images = [];
+      for (const dataURL of item.images || []) {
+        if (typeof dataURL === 'string' && dataURL.startsWith('data:image/')) images.push(await dataURLToBlob(dataURL));
+      }
+      await putRecipe({
+        id: item.id,
+        title: item.title,
+        favorite: !!item.favorite,
+        images,
+        createdAt: Number(item.createdAt) || Date.now(),
+        updatedAt: Number(item.updatedAt) || Date.now()
+      });
+    }
+    await refreshRecipes();
+    els.backupDialog.close();
+    showToast('バックアップから復元しました');
+  } catch (err) {
+    console.error(err);
+    showToast('このバックアップは復元できませんでした');
+  }
 }
 
 let toastTimer;

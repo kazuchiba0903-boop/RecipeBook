@@ -20,13 +20,14 @@
         <p class="eyebrow">MY RECIPE BOOK</p>
         <h1>🍳 レシピ帳</h1>
       </div>
+      <button id="backupBtn" class="utility-btn" type="button">バックアップ</button>
     </header>
 
     <main>
       <section class="search-panel">
         <label class="search-box">
           <span>🔎</span>
-          <input id="searchInput" type="search" placeholder="料理名・タグで検索" autocomplete="off" />
+          <input id="searchInput" type="search" placeholder="料理名で検索" autocomplete="off" />
         </label>
 
         <div class="controls-row">
@@ -38,7 +39,6 @@
           </select>
         </div>
 
-        <div id="tagChips" class="tag-chips" aria-label="タグ絞り込み"></div>
       </section>
 
       <section class="content-section">
@@ -75,10 +75,6 @@
 
       <label class="field-label" for="titleInput">料理名</label>
       <input id="titleInput" class="text-input" type="text" placeholder="例：鶏むね肉の照り焼き" maxlength="80" required />
-
-      <label class="field-label" for="tagInput">タグ</label>
-      <input id="tagInput" class="text-input" type="text" placeholder="例：主菜, 鶏肉, 簡単" />
-      <p class="field-help">「,」または「、」で区切って入力</p>
 
       <div class="field-label-row">
         <span class="field-label">スクショ</span>
@@ -117,10 +113,30 @@
       </div>
       <div class="detail-body">
         <h2 id="detailTitle"></h2>
-        <div id="detailTags" class="detail-tags"></div>
         <div id="detailImages" class="detail-images"></div>
       </div>
     </article>
+  </dialog>
+
+
+  <dialog id="backupDialog" class="sheet-dialog">
+    <div class="sheet-card backup-card">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <p class="eyebrow">BACKUP</p>
+          <h2>バックアップ</h2>
+        </div>
+        <button type="button" class="close-btn" data-close-dialog="backupDialog" aria-label="閉じる">×</button>
+      </div>
+      <p class="backup-description">料理名・お気に入り・スクショ画像を1つのバックアップファイルに保存します。機種変更やブラウザデータ消去に備えて、定期的に「ファイル」やクラウドへ保管してください。</p>
+      <div class="backup-actions">
+        <button id="exportBackupBtn" type="button" class="primary-btn">バックアップを書き出す</button>
+        <button id="importBackupBtn" type="button" class="secondary-btn">バックアップから復元</button>
+      </div>
+      <input id="backupFileInput" type="file" accept="application/json,.json" hidden />
+      <p class="field-help backup-note">復元時は、同じレシピIDのデータは上書きされ、それ以外の既存レシピは残ります。</p>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

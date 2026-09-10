@@ -170,3 +170,11 @@ main { padding: 0 16px; }
   .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sheet-card { border-radius: 28px; margin: 3vh auto; max-height: 94vh; }
 }
+
+.utility-btn { border: 1px solid var(--border); background: rgba(255,255,255,.9); color: var(--accent-dark); border-radius: 13px; padding: 9px 11px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.recipe-card .compact-body { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 10px 8px 14px; }
+.recipe-card .compact-title { flex: 1; font-size: 15px; -webkit-line-clamp: 1; }
+.recipe-card .compact-star { width: 36px; height: 36px; }
+.backup-description { margin: 0 0 18px; color: var(--muted); line-height: 1.7; font-size: 14px; }
+.backup-actions { display: grid; gap: 10px; }
+.backup-note { margin-top: 12px; line-height: 1.6; }
